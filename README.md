@@ -1,5 +1,6 @@
-Pesi Carni Monang V10.3
+Pesi Carni Monang V10.4 Fix
 
-- Pulsante DIVIDI / SEPARA PESI ben visibile sugli ordini uniti
-- Dettaglio dei pesi originali sempre mostrato sui gruppi uniti
-- Usa la versione ?v=10-3 dopo il deploy
+- Ripristinato tasto PAGATO / LIBERA TAVOLO
+- Aggiunto tasto PAGATO TAVOLO anche dentro ogni riga ordine
+- DIVIDI / SEPARA PESI più visibile sui pesi uniti
+- Split dei pesi uniti creati da questa versione in poi
