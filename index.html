@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Pesi Carni Monang</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#050505" />
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <img src="logo.png" class="logo" alt="Monang" />
+      <div>
+        <h1>PESI CARNI MONANG</h1>
+        <div id="status" class="status connecting">COLLEGAMENTO...</div>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button id="tabGriglia" class="tab active">🔥 Griglia</button>
+      <button id="tabCassa" class="tab">💶 Cassa <span id="badgePending" class="badge">0</span></button>
+      <button id="tabAdmin" class="tab">⚙️ Admin</button>
+    </nav>
+
+    <section id="viewGriglia" class="view active">
+      <div class="card">
+        <h2>1. Seleziona tavolo</h2>
+        <div id="tablesGrid" class="tables"></div>
+        <div class="selectedBox">Tavolo selezionato: <b id="selectedTableText">1</b></div>
+      </div>
+
+      <div class="card">
+        <h2>2. Seleziona carne</h2>
+        <div id="meatsGrid" class="meats"></div>
+      </div>
+
+      <div class="card">
+        <h2>3. Inserisci peso <small>(grammi)</small></h2>
+        <input id="weightInput" class="weight" type="number" inputmode="numeric" placeholder="0" />
+        <div class="calcRow">
+          <div class="miniBox">PREZZO<br><b id="priceText">€ 0,00</b><small>/100g</small></div>
+          <div class="totalBox">TOTALE<br><b id="totalText">€ 0,00</b></div>
+        </div>
+        <button id="sendBtn" class="primary">📨 INVIA ALLA CASSA</button>
+        <button id="clearBtn" class="secondary">↻ NUOVO CALCOLO</button>
+      </div>
+    </section>
+
+    <section id="viewCassa" class="view">
+      <div class="stats">
+        <div><b id="pendingCount">0</b><span>Da inserire</span></div>
+        <div><b id="doneCount">0</b><span>Inseriti</span></div>
+        <div><b id="dayTotal">€ 0,00</b><span>Totale oggi</span></div>
+      </div>
+      <div class="actions">
+        <button id="mergeBtn" class="secondary">➕ UNISCI SELEZIONATI</button>
+        <button id="clearDoneBtn" class="dangerSmall">Pulisci inseriti</button>
+      </div>
+      <h2 class="redTitle">DA INSERIRE IN CASSA</h2>
+      <div id="pendingList" class="list"></div>
+      <h2 class="greenTitle">GIÀ INSERITI</h2>
+      <div id="doneList" class="list compact"></div>
+    </section>
+
+    <section id="viewAdmin" class="view">
+      <div id="pinBox" class="card">
+        <h2>Accesso amministratore</h2>
+        <p class="muted">PIN iniziale: <b>1234</b></p>
+        <input id="pinInput" class="adminInput" type="password" inputmode="numeric" placeholder="PIN" />
+        <button id="loginBtn" class="primary">ENTRA</button>
+      </div>
+
+      <div id="adminPanel" class="card hidden">
+        <h2>Gestione carni e prezzi</h2>
+        <p class="muted">Modifica nome e prezzo. I cambiamenti si vedono su tutti i dispositivi.</p>
+        <div id="adminMeats"></div>
+        <button id="addMeatBtn" class="secondary">+ AGGIUNGI CARNE</button>
+        <button id="saveMeatsBtn" class="primary">SALVA MODIFICHE</button>
+        <button id="resetMeatsBtn" class="dangerSmall">Ripristina carni base</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
