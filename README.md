@@ -1,3 +1,1 @@
-Pesi Carni Monang V7
-
-Aggiunta modifica peso e tipo carne su righe attive, storico tavolo e cassa.
+Pesi Carni Monang V8 - Da inserire in cassa in alto e tavoli occupati blu in griglia.
