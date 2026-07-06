@@ -1,6 +1,7 @@
-Pesi Carni Monang V10.1
+Pesi Carni Monang V10.2
 
-- Icone bistecca sui tavoli occupati in griglia
-- Conteggio carni vicino al tavolo
-- Bottone DIVIDI PESI ben visibile nei pesi uniti
-- Mantiene Firebase e funzioni V10 Lite
+- Pulsante DIVIDI / SEPARA PESI visibile dentro ogni peso unito
+- Per usare Dividi: seleziona almeno 2 righe in Cassa, premi UNISCI SELEZIONATI, poi apri il gruppo e premi DIVIDI / SEPARA PESI
+- Tavoli occupati con icona bistecca più evidente
+- Stato INSERITO IN CASSA verde molto più evidente
+- Mantiene Firebase, magazzino, cassa e griglia della V10.1
