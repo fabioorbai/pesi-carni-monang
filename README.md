@@ -1,7 +1,3 @@
-# Pesi Carni Monang V1 definitiva
+Pesi Carni Monang V7
 
-Versione unica index.html con Firebase Firestore.
-- Tavoli 1-30
-- Griglia/Cassa sincronizzate
-- Admin PIN 1234
-- Modifica carni e prezzi
+Aggiunta modifica peso e tipo carne su righe attive, storico tavolo e cassa.
