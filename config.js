@@ -1,5 +1,4 @@
-// Configurazione Firebase - Pesi Carni Monang
-window.firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyAfTggVVuS4atu0-k9ogfxexkUIGhY20J8",
   authDomain: "pesi-carni-monang.firebaseapp.com",
   projectId: "pesi-carni-monang",
