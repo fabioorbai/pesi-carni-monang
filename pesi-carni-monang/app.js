@@ -1,49 +1,176 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js';
+import { getFirestore, collection, doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js';
 
-const app = initializeApp(window.firebaseConfig);
-const db = getFirestore(app);
+const DEFAULT_MEATS = [
+  { name:'TOMAHAWK', price:7.90 }, { name:'FIORENTINA', price:8.50 }, { name:'COSTATA', price:6.90 },
+  { name:'T-BONE', price:7.50 }, { name:'CONTROFILETTO', price:8.90 }, { name:'FILETTO', price:9.50 },
+  { name:'PICANHA', price:6.80 }, { name:'ENTRECÔTE', price:7.20 }, { name:'CANGURO', price:6.50 },
+  { name:'AGNELLO', price:7.00 }, { name:'MAIALE', price:4.90 }, { name:'POLLO', price:3.50 }
+];
 
-const DEFAULT = {
-  pin:'1234',
-  tables:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20],
-  meats:[
-    {id:'tomahawk',name:'Tomahawk',price:7.90},
-    {id:'fiorentina',name:'Fiorentina',price:8.50},
-    {id:'costata',name:'Costata',price:6.90},
-    {id:'tbone',name:'T-Bone',price:7.50},
-    {id:'controfiletto',name:'Controfiletto',price:8.90},
-    {id:'filetto',name:'Filetto',price:9.50},
-    {id:'picanha',name:'Picanha',price:6.50},
-    {id:'entrecote',name:'Entrecôte',price:7.20},
-    {id:'canguro',name:'Canguro',price:6.50},
-    {id:'agnello',name:'Agnello',price:6.90},
-    {id:'wagyu',name:'Wagyu',price:18.00},
-    {id:'altro',name:'Altro',price:0}
-  ]
-};
-let settings = structuredClone(DEFAULT);
-let selectedTable = 1, selectedMeatId = 'tomahawk', orders = [], adminUnlocked=false;
-const $ = id => document.getElementById(id);
-const euro = n => new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n||0));
-const today = () => new Date().toISOString().slice(0,10);
-const slug = s => (s||'carne').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+Date.now().toString(36).slice(-4);
-function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),2200); }
-function selectedMeat(){ return settings.meats.find(m=>m.id===selectedMeatId) || settings.meats[0] || {name:'-',price:0,id:'x'}; }
-function calcTotal(){ const w=Number($('weightInput').value||0); return Math.round((w/100)*Number(selectedMeat().price||0)*100)/100; }
-function updateCalc(){ const m=selectedMeat(); $('priceLabel').textContent=euro(m.price); $('totalLabel').textContent=euro(calcTotal()); }
-async function ensureSettings(){ const ref=doc(db,'settings','main'); const snap=await getDoc(ref); if(!snap.exists()) await setDoc(ref,DEFAULT); }
-function renderTables(){ const box=$('tablesGrid'); box.innerHTML=''; settings.tables.forEach(t=>{ const b=document.createElement('button'); b.className='tile '+(Number(t)===Number(selectedTable)?'active':''); b.textContent=t; b.onclick=()=>{selectedTable=t; renderTables(); $('selectedTableLabel').textContent=t;}; box.appendChild(b); }); $('selectedTableLabel').textContent=selectedTable; $('tablesInput').value=settings.tables.join(', '); }
-function renderMeats(){ const box=$('meatsGrid'); box.innerHTML=''; settings.meats.forEach(m=>{ const b=document.createElement('button'); b.className='tile meat '+(m.id===selectedMeatId?'active':''); b.innerHTML=`${m.name}<br><small>${euro(m.price)}/100g</small>`; b.onclick=()=>{selectedMeatId=m.id; renderMeats(); updateCalc();}; box.appendChild(b); }); updateCalc(); }
-function renderAdmin(){ const box=$('meatsAdmin'); box.innerHTML=''; settings.meats.forEach(m=>{ const row=document.createElement('div'); row.className='meatAdminRow'; row.innerHTML=`<input value="${m.name.replaceAll('"','&quot;')}" data-k="name"><input type="number" step="0.01" value="${m.price}" data-k="price"><button class="btn danger">X</button>`; const [name,price,del]=row.children; name.onchange=price.onchange=async()=>{ m.name=name.value.trim()||m.name; m.price=Number(price.value||0); await updateDoc(doc(db,'settings','main'),{meats:settings.meats}); toast('Carne aggiornata'); }; del.onclick=async()=>{ if(confirm('Eliminare questa carne?')){ settings.meats=settings.meats.filter(x=>x.id!==m.id); await updateDoc(doc(db,'settings','main'),{meats:settings.meats}); } }; box.appendChild(row); }); }
-function renderOrders(){ const pending=orders.filter(o=>o.status!=='done'); const done=orders.filter(o=>o.status==='done'); $('pendingBadge').textContent=pending.length; $('pendingCount').textContent=pending.length; $('doneCount').textContent=done.length; $('dayTotal').textContent=euro(done.reduce((s,o)=>s+Number(o.total||0),0)); renderList('pendingList', pending, true); renderList('doneList', done, false); }
-function renderList(id, list, pending){ const box=$(id); box.innerHTML=''; if(!list.length){ box.innerHTML='<div class="card hint">Nessun elemento</div>'; return; } list.forEach(o=>{ const d=document.createElement('div'); d.className='order '+(pending?'pending':'done'); d.innerHTML=`<input type="checkbox" data-id="${o.id}"><div class="ordTable"><small>TAVOLO</small><br><strong>${o.table}</strong></div><div class="ordInfo"><strong>${o.meatName}${o.count>1?' ×'+o.count:''}</strong><br>${o.weight} g <small>${euro(o.price)}/100g</small></div><div class="ordTotal"><strong>${euro(o.total)}</strong><br><small>${o.time||''}</small></div>${pending?'<div class="orderActions"><button class="btn secondary edit">✏️ Modifica</button><button class="btn green doneBtn">✅ Inserito</button></div>':''}`; if(pending){ d.querySelector('.doneBtn').onclick=()=>markDone([o.id]); d.querySelector('.edit').onclick=()=>editOrder(o); } box.appendChild(d); }); }
-async function addOrder(){ const w=Number($('weightInput').value||0), m=selectedMeat(); if(!selectedTable) return toast('Seleziona tavolo'); if(!m) return toast('Seleziona carne'); if(!w || w<=0) return toast('Inserisci il peso'); const n=new Date(); await addDoc(collection(db,'orders'),{day:today(),table:Number(selectedTable),meatId:m.id,meatName:m.name,price:Number(m.price),weight:w,total:calcTotal(),status:'pending',count:1,time:n.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),createdAt:serverTimestamp(),updatedAt:serverTimestamp()}); $('weightInput').value=''; updateCalc(); toast('Inviato alla cassa'); }
-async function markDone(ids){ const b=writeBatch(db); ids.forEach(id=>b.update(doc(db,'orders',id),{status:'done',updatedAt:serverTimestamp()})); await b.commit(); }
-function selectedIds(){ return [...document.querySelectorAll('#pendingList input[type=checkbox]:checked')].map(x=>x.dataset.id); }
-async function mergeSelected(){ const ids=selectedIds(); if(ids.length<2) return toast('Seleziona almeno 2 righe'); const sel=orders.filter(o=>ids.includes(o.id)); const first=sel[0]; const ok=sel.every(o=>o.table===first.table && o.meatName===first.meatName && Number(o.price)===Number(first.price) && o.status!=='done'); if(!ok) return toast('Puoi unire solo stesso tavolo, carne e prezzo'); const totalW=sel.reduce((s,o)=>s+Number(o.weight||0),0); const total=sel.reduce((s,o)=>s+Number(o.total||0),0); const b=writeBatch(db); ids.forEach(id=>b.delete(doc(db,'orders',id))); await b.commit(); await addDoc(collection(db,'orders'),{day:today(),table:first.table,meatId:first.meatId,meatName:first.meatName,price:first.price,weight:totalW,total:Math.round(total*100)/100,status:'pending',count:sel.reduce((s,o)=>s+Number(o.count||1),0),time:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),createdAt:serverTimestamp(),updatedAt:serverTimestamp()}); toast('Righe unite'); }
-function editOrder(o){ selectedTable=o.table; selectedMeatId=o.meatId; $('weightInput').value=o.weight; switchView('griglia'); renderTables(); renderMeats(); updateCalc(); toast('Riaperto in griglia. Correggi e invia di nuovo. Ricorda di eliminare la vecchia riga in cassa se serve.'); }
-function switchView(v){ document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.view===v)); document.querySelectorAll('.view').forEach(s=>s.classList.remove('active')); $('view-'+v).classList.add('active'); }
-function bind(){ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchView(b.dataset.view)); $('weightInput').oninput=updateCalc; $('clearWeight').onclick=()=>{$('weightInput').value='';updateCalc();}; $('newCalc').onclick=()=>{$('weightInput').value='';updateCalc();}; $('sendOrder').onclick=addOrder; $('mergeSelected').onclick=mergeSelected; $('markSelectedDone').onclick=()=>{ const ids=selectedIds(); if(!ids.length) return toast('Seleziona una riga'); markDone(ids); }; $('unlockAdmin').onclick=()=>{ if($('pinInput').value===settings.pin){ adminUnlocked=true; $('pinPanel').classList.add('hidden'); $('adminPanel').classList.remove('hidden'); } else toast('PIN errato'); }; $('addMeat').onclick=async()=>{ const name=$('newMeatName').value.trim(); const price=Number($('newMeatPrice').value||0); if(!name) return toast('Scrivi il nome'); settings.meats.push({id:slug(name),name,price}); await updateDoc(doc(db,'settings','main'),{meats:settings.meats}); $('newMeatName').value=''; $('newMeatPrice').value=''; }; $('saveTables').onclick=async()=>{ const arr=$('tablesInput').value.split(/[ ,;\n]+/).map(x=>Number(x)).filter(Boolean); if(!arr.length) return toast('Inserisci tavoli'); settings.tables=arr; await updateDoc(doc(db,'settings','main'),{tables:arr}); }; $('savePin').onclick=async()=>{ const p=$('pinNew').value.trim(); if(p.length<3) return toast('PIN troppo corto'); await updateDoc(doc(db,'settings','main'),{pin:p}); $('pinNew').value=''; toast('PIN aggiornato'); }; $('resetDay').onclick=async()=>{ if(!confirm('Azzerare tutti i dati di oggi?'))return; const b=writeBatch(db); orders.forEach(o=>b.delete(doc(db,'orders',o.id))); await b.commit(); }; }
-async function init(){ bind(); try{ await ensureSettings(); onSnapshot(doc(db,'settings','main'),snap=>{ settings={...DEFAULT,...(snap.data()||{})}; if(!settings.meats.find(m=>m.id===selectedMeatId)) selectedMeatId=settings.meats[0]?.id; renderTables(); renderMeats(); renderAdmin(); $('connection').textContent='ONLINE - SINCRONIZZATO'; }); const q=query(collection(db,'orders'),where('day','==',today()),orderBy('createdAt','desc')); onSnapshot(q,snap=>{ orders=snap.docs.map(d=>({id:d.id,...d.data()})); renderOrders(); },err=>{ console.error(err); $('connection').textContent='ERRORE DATABASE'; toast('Controlla le regole Firestore'); }); }catch(e){ console.error(e); $('connection').textContent='ERRORE FIREBASE'; toast('Firebase non collegato: controlla config e regole'); renderTables(); renderMeats(); renderAdmin(); } }
+const € = n => new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(Number(n||0));
+const todayKey = () => new Date().toISOString().slice(0,10);
+const uid = () => Math.random().toString(36).slice(2,10);
+
+let db, selectedTable = 1, selectedMeat = null, meats = [], orders = [], selectedIds = new Set(), adminOk=false;
+
+const el = id => document.getElementById(id);
+const toast = msg => { el('toast').textContent=msg; el('toast').style.display='block'; setTimeout(()=>el('toast').style.display='none',2600); };
+
+async function init(){
+  try{
+    const app = initializeApp(window.firebaseConfig);
+    db = getFirestore(app);
+    await ensureMeats();
+    bindUI();
+    renderTables();
+    listenMeats();
+    listenOrders();
+    setStatus('ONLINE - SINCRONIZZATO','ok');
+  }catch(e){
+    console.error(e);
+    setStatus('ERRORE FIREBASE','err');
+    toast('Errore Firebase: controlla config e regole');
+  }
+}
+
+function setStatus(text,type){ const s=el('status'); s.textContent=text; s.className='status '+type; }
+
+async function ensureMeats(){
+  const ref = doc(db,'settings','meats');
+  const snap = await getDoc(ref);
+  if(!snap.exists()) await setDoc(ref,{ list: DEFAULT_MEATS, updatedAt: serverTimestamp() });
+}
+
+function bindUI(){
+  el('tabGriglia').onclick=()=>show('Griglia'); el('tabCassa').onclick=()=>show('Cassa'); el('tabAdmin').onclick=()=>show('Admin');
+  el('weightInput').oninput=calc;
+  el('clearBtn').onclick=()=>{ el('weightInput').value=''; calc(); };
+  el('sendBtn').onclick=sendOrder;
+  el('mergeBtn').onclick=mergeSelected;
+  el('clearDoneBtn').onclick=clearDone;
+  el('loginBtn').onclick=()=>{ if(el('pinInput').value==='1234'){ adminOk=true; el('pinBox').classList.add('hidden'); el('adminPanel').classList.remove('hidden'); renderAdmin(); } else toast('PIN non corretto'); };
+  el('addMeatBtn').onclick=()=>{ meats.push({name:'NUOVA CARNE', price:0}); renderAdmin(); renderMeats(); };
+  el('saveMeatsBtn').onclick=saveAdminMeats;
+  el('resetMeatsBtn').onclick=async()=>{ if(confirm('Ripristinare le carni base?')) await setDoc(doc(db,'settings','meats'),{list:DEFAULT_MEATS,updatedAt:serverTimestamp()}); };
+}
+
+function show(name){
+  ['Griglia','Cassa','Admin'].forEach(n=>{ el('tab'+n).classList.toggle('active',n===name); el('view'+n).classList.toggle('active',n===name); });
+}
+
+function renderTables(){
+  const g=el('tablesGrid'); g.innerHTML='';
+  for(let i=1;i<=30;i++){
+    const b=document.createElement('button'); b.textContent=i; b.className=i===selectedTable?'active':'';
+    b.onclick=()=>{ selectedTable=i; el('selectedTableText').textContent=i; renderTables(); };
+    g.appendChild(b);
+  }
+}
+
+function listenMeats(){
+  onSnapshot(doc(db,'settings','meats'), snap=>{
+    meats = snap.exists() ? (snap.data().list||DEFAULT_MEATS) : DEFAULT_MEATS;
+    if(!selectedMeat || !meats.find(m=>m.name===selectedMeat.name)) selectedMeat=meats[0];
+    renderMeats(); renderAdmin(); calc();
+  }, err=>{ console.error(err); setStatus('ERRORE DATABASE','err'); });
+}
+
+function renderMeats(){
+  const g=el('meatsGrid'); g.innerHTML='';
+  meats.forEach(m=>{
+    const b=document.createElement('button'); b.innerHTML=`${m.name}<small>${Number(m.price).toFixed(2).replace('.',',')} €/100G</small>`;
+    b.className=selectedMeat && selectedMeat.name===m.name?'active':'';
+    b.onclick=()=>{ selectedMeat=m; renderMeats(); calc(); };
+    g.appendChild(b);
+  });
+}
+
+function calc(){
+  const w=Number(el('weightInput').value||0), p=Number(selectedMeat?.price||0), total=w/100*p;
+  el('priceText').textContent=€(p); el('totalText').textContent=€(total); return {w,p,total};
+}
+
+async function sendOrder(){
+  const {w,p,total}=calc();
+  if(!selectedMeat) return toast('Seleziona una carne');
+  if(!w || w<=0) return toast('Inserisci il peso');
+  try{
+    await addDoc(collection(db,'orders'),{
+      table:selectedTable, meatName:selectedMeat.name, pricePer100:p, weight:w, total:Math.round(total*100)/100,
+      status:'pending', day:todayKey(), createdAt:serverTimestamp(), updatedAt:serverTimestamp()
+    });
+    el('weightInput').value=''; calc(); toast('Inviato alla cassa'); show('Cassa');
+  }catch(e){ console.error(e); toast('Errore invio alla cassa'); }
+}
+
+function listenOrders(){
+  const q=query(collection(db,'orders'), orderBy('createdAt','desc'));
+  onSnapshot(q, snap=>{
+    orders=snap.docs.map(d=>({id:d.id,...d.data()})).filter(o=>o.day===todayKey());
+    renderOrders(); setStatus('ONLINE - SINCRONIZZATO','ok');
+  }, err=>{ console.error(err); setStatus('ERRORE DATABASE','err'); toast('Errore lettura database'); });
+}
+
+function renderOrders(){
+  const pending=orders.filter(o=>o.status==='pending'); const done=orders.filter(o=>o.status==='done');
+  el('badgePending').textContent=pending.length; el('pendingCount').textContent=pending.length; el('doneCount').textContent=done.length;
+  el('dayTotal').textContent=€(orders.reduce((s,o)=>s+Number(o.total||0),0));
+  el('pendingList').innerHTML=pending.length?'':'<p class="muted">Nessuna carne da inserire.</p>';
+  pending.sort((a,b)=>a.table-b.table).forEach(o=>el('pendingList').appendChild(orderEl(o,true)));
+  el('doneList').innerHTML=done.length?'':'<p class="muted">Nessuna carne inserita.</p>';
+  done.slice(0,30).forEach(o=>el('doneList').appendChild(orderEl(o,false)));
+}
+
+function orderEl(o,pending){
+  const d=document.createElement('div'); d.className='order '+(pending?'pending':'done');
+  const checked=selectedIds.has(o.id)?'checked':'';
+  d.innerHTML=`<input class="check" type="checkbox" ${checked} ${pending?'':'disabled'}>
+    <div><div class="orderTitle">Tav. ${o.table} - ${o.meatName}</div><div class="orderSub">${o.weight} g · ${Number(o.pricePer100).toFixed(2).replace('.',',')} €/100g</div></div>
+    <div class="orderPrice">${€(o.total)}</div>
+    <div class="orderBtns">${pending?'<button class="btnDone">✓ INSERITO</button><button class="btnDelete">ELIMINA</button>':'<button class="btnEdit">↩ RIPRISTINA</button><button class="btnDelete">ELIMINA</button>'}</div>`;
+  d.querySelector('.check').onchange=e=>{ e.target.checked?selectedIds.add(o.id):selectedIds.delete(o.id); };
+  const buttons=d.querySelectorAll('.orderBtns button');
+  buttons[0].onclick=()=> updateDoc(doc(db,'orders',o.id),{status:pending?'done':'pending',updatedAt:serverTimestamp()});
+  buttons[1].onclick=()=>{ if(confirm('Eliminare questa riga?')) deleteDoc(doc(db,'orders',o.id)); };
+  return d;
+}
+
+async function mergeSelected(){
+  const chosen=orders.filter(o=>selectedIds.has(o.id)&&o.status==='pending');
+  if(chosen.length<2) return toast('Seleziona almeno 2 righe da unire');
+  const first=chosen[0];
+  const same=chosen.every(o=>o.table===first.table && o.meatName===first.meatName && Number(o.pricePer100)===Number(first.pricePer100));
+  if(!same) return toast('Puoi unire solo stesso tavolo, carne e prezzo');
+  const weight=chosen.reduce((s,o)=>s+Number(o.weight||0),0), total=chosen.reduce((s,o)=>s+Number(o.total||0),0);
+  const batch=writeBatch(db);
+  chosen.forEach(o=>batch.delete(doc(db,'orders',o.id)));
+  batch.set(doc(collection(db,'orders')), {table:first.table, meatName:first.meatName+' ×'+chosen.length, pricePer100:first.pricePer100, weight, total:Math.round(total*100)/100, status:'pending', day:todayKey(), createdAt:serverTimestamp(), updatedAt:serverTimestamp(), merged:true});
+  await batch.commit(); selectedIds.clear(); toast('Righe unite');
+}
+
+async function clearDone(){
+  const done=orders.filter(o=>o.status==='done'); if(!done.length) return;
+  if(!confirm('Eliminare le righe già inserite di oggi?')) return;
+  const batch=writeBatch(db); done.forEach(o=>batch.delete(doc(db,'orders',o.id))); await batch.commit(); toast('Inseriti puliti');
+}
+
+function renderAdmin(){
+  if(!adminOk) return;
+  const box=el('adminMeats'); box.innerHTML='';
+  meats.forEach((m,i)=>{
+    const r=document.createElement('div'); r.className='adminRow';
+    r.innerHTML=`<input data-i="${i}" data-k="name" value="${m.name||''}"><input data-i="${i}" data-k="price" type="number" step="0.01" value="${m.price||0}"><button>×</button>`;
+    r.querySelector('button').onclick=()=>{ meats.splice(i,1); renderAdmin(); renderMeats(); };
+    box.appendChild(r);
+  });
+}
+
+async function saveAdminMeats(){
+  const rows=[...document.querySelectorAll('#adminMeats input')];
+  rows.forEach(inp=>{ const i=Number(inp.dataset.i), k=inp.dataset.k; meats[i][k]=k==='price'?Number(inp.value):inp.value.toUpperCase(); });
+  meats=meats.filter(m=>m.name && Number(m.price)>=0);
+  await setDoc(doc(db,'settings','meats'),{list:meats,updatedAt:serverTimestamp()}); toast('Carni salvate');
+}
+
 init();
