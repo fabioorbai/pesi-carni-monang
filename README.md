@@ -1,1 +1,1 @@
-Pesi Carni Monang V8 - Da inserire in cassa in alto e tavoli occupati blu in griglia.
+Pesi Carni Monang V9 - Magazzino intelligente
