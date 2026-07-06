@@ -1,7 +1,3 @@
-# Pesi Carni Monang - versione ufficiale Firebase
-
-- Sincronizzazione reale Firestore
-- Tavoli 1-30
-- Griglia e Cassa in tempo reale
-- Admin per modificare carni e prezzi
-- Unisci selezionati in cassa
+# Pesi Carni Monang V2
+Versione singolo file con Firebase Firestore, tavoli 1-30, griglia, cassa e admin.
+PIN admin iniziale: 1234
