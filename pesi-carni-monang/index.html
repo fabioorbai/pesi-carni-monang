@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <title>Pesi Carni Monang</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="topbar">
+      <img src="logo.png" class="logo" alt="Monang" />
+      <div>
+        <h1>PESI CARNI MONANG</h1>
+        <div id="connection" class="connection">DEMO OFFLINE</div>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="griglia">🔥 Griglia</button>
+      <button class="tab" data-view="cassa">💶 Cassa <span id="pendingBadge" class="badge">0</span></button>
+      <button class="tab" data-view="admin">⚙️ Admin</button>
+    </nav>
+
+    <main>
+      <section id="view-griglia" class="view active">
+        <div class="card">
+          <h2>1. Seleziona tavolo</h2>
+          <div id="tablesGrid" class="grid tables"></div>
+          <div class="selectedBox">Tavolo selezionato: <strong id="selectedTableLabel">-</strong></div>
+        </div>
+
+        <div class="card">
+          <h2>2. Seleziona carne</h2>
+          <div id="meatsGrid" class="grid meats"></div>
+        </div>
+
+        <div class="card">
+          <h2>3. Inserisci peso</h2>
+          <div class="weightRow">
+            <input id="weightInput" type="number" inputmode="numeric" placeholder="0" />
+            <span>g</span>
+            <button id="clearWeight" class="btn secondary">Azzera</button>
+          </div>
+          <div class="calcRow">
+            <div class="priceBox">Prezzo<br><strong id="priceLabel">€ 0,00</strong><small>/100 g</small></div>
+            <div class="totalBox">Totale<br><strong id="totalLabel">€ 0,00</strong></div>
+          </div>
+          <button id="sendOrder" class="btn green big">✈️ INVIA ALLA CASSA</button>
+          <button id="newCalc" class="btn secondary full">Nuovo calcolo</button>
+        </div>
+      </section>
+
+      <section id="view-cassa" class="view">
+        <div class="summary">
+          <div><strong id="pendingCount">0</strong><span>Da inserire</span></div>
+          <div><strong id="doneCount">0</strong><span>Inseriti</span></div>
+          <div><strong id="dayTotal">€ 0,00</strong><span>Totale oggi</span></div>
+        </div>
+
+        <div class="cassaActions">
+          <button id="mergeSelected" class="btn gold">➕ Unisci selezionati</button>
+          <button id="markSelectedDone" class="btn green">✅ Inserito</button>
+        </div>
+
+        <h2 class="redTitle">DA INSERIRE IN CASSA</h2>
+        <div id="pendingList" class="orderList"></div>
+
+        <h2 class="greenTitle">GIÀ INSERITI</h2>
+        <div id="doneList" class="orderList compact"></div>
+      </section>
+
+      <section id="view-admin" class="view">
+        <div id="pinPanel" class="card">
+          <h2>Accesso Admin</h2>
+          <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN" />
+          <button id="unlockAdmin" class="btn green full">Entra</button>
+          <p class="hint">PIN iniziale: 1234. Puoi cambiarlo nelle impostazioni.</p>
+        </div>
+
+        <div id="adminPanel" class="hidden">
+          <div class="card">
+            <h2>Carni e prezzi</h2>
+            <div class="editRow">
+              <input id="newMeatName" placeholder="Nome carne" />
+              <input id="newMeatPrice" type="number" step="0.01" placeholder="€/100g" />
+              <button id="addMeat" class="btn green">Aggiungi</button>
+            </div>
+            <div id="meatsAdmin"></div>
+          </div>
+
+          <div class="card">
+            <h2>Tavoli</h2>
+            <textarea id="tablesInput" rows="3"></textarea>
+            <button id="saveTables" class="btn green full">Salva tavoli</button>
+          </div>
+
+          <div class="card">
+            <h2>Impostazioni</h2>
+            <div class="editRow">
+              <input id="pinNew" type="password" inputmode="numeric" placeholder="Nuovo PIN" />
+              <button id="savePin" class="btn secondary">Cambia PIN</button>
+            </div>
+            <button id="resetDay" class="btn danger full">Azzera giornata</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
