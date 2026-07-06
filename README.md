@@ -1,1 +1,1 @@
-Pesi Carni Monang V9 - Magazzino intelligente
+Pesi Carni Monang V10 Lite - evidenza inserito, ordine arrivo, dettagli unione pesi.
