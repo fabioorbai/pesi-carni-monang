@@ -1,7 +1,7 @@
-Pesi Carni Monang V10.6
+Pesi Carni Monang V11
 
-- In Cassa, Tavoli attivi mostrati come griglia 1-30, uguale alla griglia
-- Tavoli blu con icona bistecca e conteggio carni
-- Click sul tavolo per vedere dettaglio e pagare/liberare
-- Ordinamento arrivo più stabile con createdMs
-- Modifica carne con elenco numerato e ricalcolo prezzo
+- Da inserire in cassa mostra solo ordini non ancora inseriti
+- Dopo INSERITO, la riga sparisce dalla lista e resta nel tavolo attivo
+- Tavoli attivi in griglia 1-30 con icona bistecca
+- Dettaglio tavolo con storico carni inserite/non inserite fino al pagamento
+- Ordinamento più stabile con timestamp locale createdMs
