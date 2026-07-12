@@ -1,10 +1,10 @@
-# Pesi Carni Monang V12
+# Pesi Carni Monang V12.1
 
-Novità:
-- Nuova sezione Storico Tavoli, solo consultazione.
-- Archiviazione automatica del conto quando si preme Pagato / libera tavolo.
-- Avviso in Griglia se un tavolo completamente inserito ha ancora un conto aperto.
-- Possibilità di continuare il conto, creare un nuovo conto archiviando il precedente, oppure annullare.
-- Storico con tavolo, data/ora, carni, pesi e totale.
-
-La raccolta Firestore `history` viene creata automaticamente al primo conto archiviato.
+Aggiornamenti:
+- In Admin: pulsante **AZZERA TUTTO LO STORICO**
+- Conferma doppia e chiara prima della cancellazione
+- La cancellazione dello storico non modifica carni, prezzi, magazzino o ordini attivi
+- Sostituito il menu numerico 1/2/3 con tre grandi pulsanti cliccabili:
+  - Continua sul conto attuale
+  - Nuovo conto e archivia il precedente
+  - Annulla
