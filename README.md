@@ -1,6 +1,10 @@
-Pesi Carni Monang V11.1
+# Pesi Carni Monang V12
 
-- Tavolo blu quando ci sono carni da inserire in cassa
-- Tavolo verde quando tutte le carni attive sono state inserite
-- Scritta INSERITO visibile sul tavolo
-- Il tavolo torna libero dopo Pagato / libera tavolo
+Novità:
+- Nuova sezione Storico Tavoli, solo consultazione.
+- Archiviazione automatica del conto quando si preme Pagato / libera tavolo.
+- Avviso in Griglia se un tavolo completamente inserito ha ancora un conto aperto.
+- Possibilità di continuare il conto, creare un nuovo conto archiviando il precedente, oppure annullare.
+- Storico con tavolo, data/ora, carni, pesi e totale.
+
+La raccolta Firestore `history` viene creata automaticamente al primo conto archiviato.
